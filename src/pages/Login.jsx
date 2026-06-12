@@ -1,9 +1,56 @@
+import { useState } from "react";
 import { BusFront, Lock, User, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 function Login() {
   const navigate = useNavigate();
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("Admin");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+          role,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.message || "Login failed");
+        return;
+      }
+
+      localStorage.setItem("srmssToken", data.token);
+      localStorage.setItem("srmssUser", JSON.stringify(data.user));
+
+      if (data.user.role === "Driver") {
+        navigate("/driver-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
+    } catch (err) {
+      setError("Backend server not connected. Please start the backend server.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
@@ -22,9 +69,7 @@ function Login() {
 
               <div>
                 <h1 className="text-2xl font-bold">SRMSS</h1>
-                <p className="text-sm text-blue-100">
-                  Smart Route Management
-                </p>
+                <p className="text-sm text-blue-100">Smart Route Management</p>
               </div>
             </div>
 
@@ -66,9 +111,7 @@ function Login() {
 
             <div>
               <h1 className="text-2xl font-bold text-slate-900">SRMSS</h1>
-              <p className="text-sm text-slate-500">
-                Smart Route Management
-              </p>
+              <p className="text-sm text-slate-500">Smart Route Management</p>
             </div>
           </div>
 
@@ -78,7 +121,13 @@ function Login() {
             Login to manage depot operations.
           </p>
 
-          <form className="mt-8 space-y-5">
+          {error && (
+            <div className="mt-5 rounded-2xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleLogin} className="mt-8 space-y-5">
             <div>
               <label className="text-sm font-semibold text-slate-700">
                 Username
@@ -90,6 +139,8 @@ function Login() {
                 <input
                   type="text"
                   placeholder="Enter username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="w-full outline-none text-slate-700"
                 />
               </div>
@@ -106,6 +157,8 @@ function Login() {
                 <input
                   type="password"
                   placeholder="Enter password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="w-full outline-none text-slate-700"
                 />
               </div>
@@ -119,24 +172,33 @@ function Login() {
               <div className="mt-2 flex items-center gap-3 rounded-2xl border border-slate-200 px-4 py-3">
                 <Users size={20} className="text-slate-400" />
 
-                <select className="w-full outline-none text-slate-700 bg-transparent">
-                  <option>Administrator</option>
-                  <option>Depot Manager</option>
-                  <option>Depot Staff</option>
-                  <option>Driver</option>
-                  <option>Maintenance Staff</option>
+                <select
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  className="w-full outline-none text-slate-700 bg-transparent"
+                >
+                  <option value="Admin">Admin</option>
+                  <option value="Depot Manager">Depot Manager</option>
+                  <option value="Driver">Driver</option>
                 </select>
               </div>
             </div>
 
             <button
-              type="button"
-              onClick={() => navigate("/dashboard")}
-              className="w-full rounded-2xl bg-blue-600 py-4 font-semibold text-white hover:bg-blue-700 transition shadow-lg shadow-blue-600/20"
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-2xl bg-blue-600 py-4 font-semibold text-white hover:bg-blue-700 transition shadow-lg shadow-blue-600/20 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </button>
           </form>
+
+          <div className="mt-6 rounded-2xl bg-slate-50 border border-slate-200 p-4 text-sm text-slate-500">
+            <p className="font-semibold text-slate-700 mb-2">Demo Login</p>
+            <p>Admin: admin / admin123</p>
+            <p>Manager: manager / manager123</p>
+            <p>Driver: driver / driver123</p>
+          </div>
 
           <p className="mt-8 text-center text-sm text-slate-400">
             SRMSS © 2026 Public Transport Depot Management
