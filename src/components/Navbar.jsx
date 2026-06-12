@@ -4,7 +4,7 @@ import { useLocation } from "react-router-dom";
 const pageTitles = {
   "/dashboard": {
     title: "Dashboard",
-    subtitle: "Welcome back, Depot Administrator",
+    subtitle: "Welcome back to SRMSS depot operations",
   },
   "/routes": {
     title: "Route Management",
@@ -44,9 +44,42 @@ const pageTitles = {
   },
 };
 
+function getStoredUser() {
+  try {
+    const user = localStorage.getItem("user");
+    const srmssUser = localStorage.getItem("srmssUser");
+
+    if (user) {
+      return JSON.parse(user);
+    }
+
+    if (srmssUser) {
+      return JSON.parse(srmssUser);
+    }
+
+    return {};
+  } catch {
+    return {};
+  }
+}
+
 function Navbar({ onMenuClick }) {
   const location = useLocation();
   const currentPage = pageTitles[location.pathname] || pageTitles["/dashboard"];
+
+  const storedUser = getStoredUser();
+
+  const displayName =
+    storedUser.name ||
+    storedUser.fullName ||
+    storedUser.username ||
+    "User";
+
+  const displayRole =
+    storedUser.role ||
+    storedUser.userRole ||
+    storedUser.type ||
+    "Role";
 
   return (
     <header className="sticky top-0 z-30 bg-slate-50/90 backdrop-blur border-b border-slate-200">
@@ -81,16 +114,15 @@ function Navbar({ onMenuClick }) {
         <div className="flex items-center gap-3">
           <button className="relative h-11 w-11 rounded-2xl bg-white border border-slate-200 flex items-center justify-center">
             <Bell size={20} className="text-slate-600" />
-            <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-white text-xs flex items-center justify-center">
-              3
-            </span>
           </button>
 
           <div className="hidden sm:flex items-center gap-3 rounded-2xl bg-white border border-slate-200 px-3 py-2">
             <UserCircle size={28} className="text-blue-600" />
             <div>
-              <p className="text-sm font-semibold text-slate-900">Admin</p>
-              <p className="text-xs text-slate-500">Administrator</p>
+              <p className="text-sm font-semibold text-slate-900">
+                {displayName}
+              </p>
+              <p className="text-xs text-slate-500">{displayRole}</p>
             </div>
           </div>
         </div>

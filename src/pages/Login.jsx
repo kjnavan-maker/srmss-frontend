@@ -37,6 +37,9 @@ function Login() {
         return;
       }
 
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
       localStorage.setItem("srmssToken", data.token);
       localStorage.setItem("srmssUser", JSON.stringify(data.user));
 

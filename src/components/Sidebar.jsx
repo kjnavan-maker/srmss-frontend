@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Map,
@@ -13,20 +13,107 @@ import {
   LogOut,
 } from "lucide-react";
 
-const menuItems = [
-  { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
-  { name: "Routes", icon: Map, path: "/routes" },
-  { name: "Schedules", icon: CalendarClock, path: "/schedules" },
-  { name: "Drivers", icon: Users, path: "/drivers" },
-  { name: "Vehicles", icon: BusFront, path: "/vehicles" },
-  { name: "Fuel Logs", icon: Fuel, path: "/fuel-logs" },
-  { name: "Maintenance", icon: Wrench, path: "/maintenance" },
-  { name: "Reports", icon: BarChart3, path: "/reports" },
-  { name: "Users", icon: UserCog, path: "/users" },
-  { name: "Driver View", icon: Navigation, path: "/driver-dashboard" },
+const allMenuItems = [
+  {
+    name: "Dashboard",
+    icon: LayoutDashboard,
+    path: "/dashboard",
+    roles: ["Admin", "Administrator", "Depot Manager", "Manager"],
+  },
+  {
+    name: "Routes",
+    icon: Map,
+    path: "/routes",
+    roles: ["Admin", "Administrator", "Depot Manager", "Manager"],
+  },
+  {
+    name: "Schedules",
+    icon: CalendarClock,
+    path: "/schedules",
+    roles: ["Admin", "Administrator", "Depot Manager", "Manager"],
+  },
+  {
+    name: "Drivers",
+    icon: Users,
+    path: "/drivers",
+    roles: ["Admin", "Administrator", "Depot Manager", "Manager"],
+  },
+  {
+    name: "Vehicles",
+    icon: BusFront,
+    path: "/vehicles",
+    roles: ["Admin", "Administrator", "Depot Manager", "Manager"],
+  },
+  {
+    name: "Fuel Logs",
+    icon: Fuel,
+    path: "/fuel-logs",
+    roles: ["Admin", "Administrator", "Depot Manager", "Manager"],
+  },
+  {
+    name: "Maintenance",
+    icon: Wrench,
+    path: "/maintenance",
+    roles: ["Admin", "Administrator", "Depot Manager", "Manager"],
+  },
+  {
+    name: "Reports",
+    icon: BarChart3,
+    path: "/reports",
+    roles: ["Admin", "Administrator", "Depot Manager", "Manager"],
+  },
+  {
+    name: "Users",
+    icon: UserCog,
+    path: "/users",
+    roles: ["Admin", "Administrator"],
+  },
+  {
+    name: "Driver View",
+    icon: Navigation,
+    path: "/driver-dashboard",
+    roles: ["Admin", "Administrator", "Driver"],
+  },
 ];
 
+function getStoredUser() {
+  try {
+    return (
+      JSON.parse(localStorage.getItem("user")) ||
+      JSON.parse(localStorage.getItem("srmssUser")) ||
+      {}
+    );
+  } catch {
+    return {};
+  }
+}
+
 function Sidebar() {
+  const navigate = useNavigate();
+
+  const storedUser = getStoredUser();
+
+  const userRole =
+    storedUser.role ||
+    storedUser.userRole ||
+    storedUser.type ||
+    storedUser.accountType ||
+    "";
+
+  const menuItems = allMenuItems.filter((item) =>
+    item.roles.includes(userRole)
+  );
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("srmssToken");
+    localStorage.removeItem("srmssUser");
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminName");
+    navigate("/login");
+  };
+
   return (
     <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-72 bg-slate-950 text-white flex-col">
       <div className="h-20 flex items-center gap-3 px-6 border-b border-white/10">
@@ -63,13 +150,13 @@ function Sidebar() {
       </nav>
 
       <div className="p-4 border-t border-white/10">
-        <NavLink
-          to="/login"
+        <button
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-red-300 hover:bg-red-500/10 transition"
         >
           <LogOut size={20} />
           Logout
-        </NavLink>
+        </button>
       </div>
     </aside>
   );
