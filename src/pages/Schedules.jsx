@@ -10,7 +10,7 @@ import {
   XCircle,
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const initialForm = {
   routeNo: "",
@@ -65,7 +65,7 @@ function Schedules() {
       }
 
       setSchedules(data.data || []);
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     } finally {
       setLoading(false);
@@ -76,17 +76,11 @@ function Schedules() {
     fetchSchedules();
   }, []);
 
-  const filteredSchedules = useMemo(() => {
-    return schedules;
-  }, [schedules]);
+  const filteredSchedules = useMemo(() => schedules, [schedules]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const clearForm = () => {
@@ -113,7 +107,7 @@ function Schedules() {
 
     const conflict = schedules.find(
       (schedule) =>
-        schedule.id !== editingId &&
+        schedule._id !== editingId &&
         schedule.busNo === formData.busNo &&
         schedule.date === formData.date &&
         schedule.departureTime === formData.departureTime
@@ -148,9 +142,7 @@ function Schedules() {
 
       const response = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
@@ -178,21 +170,15 @@ function Schedules() {
           : "Schedule created successfully"
       );
 
-      setConflictStatus({
-        type: "success",
-        title: "Schedule saved",
-        text: "Schedule has been validated and saved successfully.",
-      });
-
       clearForm();
       fetchSchedules();
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     }
   };
 
   const handleEdit = (schedule) => {
-    setEditingId(schedule.id);
+    setEditingId(schedule._id);
 
     setFormData({
       routeNo: schedule.routeNo || "",
@@ -208,6 +194,11 @@ function Schedules() {
   };
 
   const handleDelete = async (id) => {
+    if (!id) {
+      setError("Invalid schedule ID");
+      return;
+    }
+
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this schedule?"
     );
@@ -231,7 +222,7 @@ function Schedules() {
 
       setMessage("Schedule deleted successfully");
       fetchSchedules();
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     }
   };
@@ -306,114 +297,77 @@ function Schedules() {
             onSubmit={handleSubmit}
             className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4"
           >
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Route Number
-              </label>
-              <input
-                type="text"
-                name="routeNo"
-                value={formData.routeNo}
-                onChange={handleChange}
-                placeholder="Example: 138"
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="text"
+              name="routeNo"
+              value={formData.routeNo}
+              onChange={handleChange}
+              placeholder="Route Number"
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Bus Number
-              </label>
-              <input
-                type="text"
-                name="busNo"
-                value={formData.busNo}
-                onChange={handleChange}
-                placeholder="Example: NB-4587"
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="text"
+              name="busNo"
+              value={formData.busNo}
+              onChange={handleChange}
+              placeholder="Bus Number"
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Driver Name
-              </label>
-              <input
-                type="text"
-                name="driverName"
-                value={formData.driverName}
-                onChange={handleChange}
-                placeholder="Example: Kamal Perera"
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="text"
+              name="driverName"
+              value={formData.driverName}
+              onChange={handleChange}
+              placeholder="Driver Name"
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Schedule Date
-              </label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Departure Time
-              </label>
-              <input
-                type="time"
-                name="departureTime"
-                value={formData.departureTime}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="time"
+              name="departureTime"
+              value={formData.departureTime}
+              onChange={handleChange}
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Arrival Time
-              </label>
-              <input
-                type="time"
-                name="arrivalTime"
-                value={formData.arrivalTime}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="time"
+              name="arrivalTime"
+              value={formData.arrivalTime}
+              onChange={handleChange}
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Trip Status
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500 bg-white"
-              >
-                <option value="Scheduled">Scheduled</option>
-                <option value="On-time">On-time</option>
-                <option value="Delayed">Delayed</option>
-                <option value="Completed">Completed</option>
-                <option value="Cancelled">Cancelled</option>
-              </select>
-            </div>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500 bg-white"
+            >
+              <option value="Scheduled">Scheduled</option>
+              <option value="On-time">On-time</option>
+              <option value="Delayed">Delayed</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
 
-            <div className="flex items-end">
-              <button
-                type="button"
-                onClick={checkLocalConflict}
-                className="w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition"
-              >
-                Check Conflict
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={checkLocalConflict}
+              className="rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800 transition"
+            >
+              Check Conflict
+            </button>
 
             <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <button
@@ -435,24 +389,14 @@ function Schedules() {
         </div>
 
         <div className="rounded-3xl bg-white border border-slate-200 shadow-sm p-6">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <AlertTriangle size={22} />
-            </div>
-            <div>
-              <h2 className="font-bold text-slate-900">Conflict Status</h2>
-              <p className="text-sm text-slate-500">Schedule validation</p>
-            </div>
-          </div>
+          <h2 className="font-bold text-slate-900">Conflict Status</h2>
 
-          <div className="mt-6 space-y-4">
-            <div className={`rounded-2xl border p-4 ${conflictBoxClass}`}>
-              <div className="flex gap-3">
-                <ConflictIcon className="shrink-0" size={20} />
-                <div>
-                  <p className="font-semibold">{conflictStatus.title}</p>
-                  <p className="mt-1 text-sm">{conflictStatus.text}</p>
-                </div>
+          <div className={`mt-6 rounded-2xl border p-4 ${conflictBoxClass}`}>
+            <div className="flex gap-3">
+              <ConflictIcon className="shrink-0" size={20} />
+              <div>
+                <p className="font-semibold">{conflictStatus.title}</p>
+                <p className="mt-1 text-sm">{conflictStatus.text}</p>
               </div>
             </div>
           </div>
@@ -508,11 +452,11 @@ function Schedules() {
                 <tbody>
                   {filteredSchedules.map((schedule) => (
                     <tr
-                      key={schedule.id}
+                      key={schedule._id}
                       className="border-t border-slate-100 hover:bg-slate-50"
                     >
                       <td className="px-6 py-4 font-semibold text-slate-700">
-                        {schedule.id}
+                        {schedule._id?.slice(-6)}
                       </td>
 
                       <td className="px-6 py-4 font-semibold text-slate-900">
@@ -555,7 +499,7 @@ function Schedules() {
                           </button>
 
                           <button
-                            onClick={() => handleDelete(schedule.id)}
+                            onClick={() => handleDelete(schedule._id)}
                             className="h-9 w-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100"
                           >
                             <Trash2 size={16} />
@@ -564,6 +508,17 @@ function Schedules() {
                       </td>
                     </tr>
                   ))}
+
+                  {filteredSchedules.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan="8"
+                        className="px-6 py-8 text-center text-slate-500"
+                      >
+                        No schedules found.
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -571,13 +526,13 @@ function Schedules() {
             <div className="md:hidden p-4 space-y-4">
               {filteredSchedules.map((schedule) => (
                 <div
-                  key={schedule.id}
+                  key={schedule._id}
                   className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-xs font-semibold text-blue-600">
-                        {schedule.id}
+                        {schedule._id?.slice(-6)}
                       </p>
                       <h3 className="mt-1 font-bold text-slate-900">
                         Route {schedule.routeNo}
@@ -621,7 +576,7 @@ function Schedules() {
                     </button>
 
                     <button
-                      onClick={() => handleDelete(schedule.id)}
+                      onClick={() => handleDelete(schedule._id)}
                       className="flex-1 rounded-xl bg-red-50 py-2 text-sm font-semibold text-red-600"
                     >
                       Delete
@@ -629,6 +584,12 @@ function Schedules() {
                   </div>
                 </div>
               ))}
+
+              {filteredSchedules.length === 0 && (
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-500">
+                  No schedules found.
+                </div>
+              )}
             </div>
           </>
         )}

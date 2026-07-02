@@ -10,7 +10,7 @@ import {
   Wrench,
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const initialForm = {
   busNo: "",
@@ -152,7 +152,7 @@ function Vehicles() {
   };
 
   const handleEdit = (vehicle) => {
-    setEditingId(vehicle.id);
+    setEditingId(vehicle._id);
 
     setFormData({
       busNo: vehicle.busNo || "",
@@ -167,33 +167,38 @@ function Vehicles() {
   };
 
   const handleDelete = async (id) => {
-    const confirmDelete = window.confirm(
-      "Are you sure you want to delete this vehicle?"
-    );
+  if (!id) {
+    setError("Invalid vehicle ID");
+    return;
+  }
 
-    if (!confirmDelete) return;
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this vehicle?"
+  );
 
-    try {
-      setMessage("");
-      setError("");
+  if (!confirmDelete) return;
 
-      const response = await fetch(`${API_URL}/vehicles/${id}`, {
-        method: "DELETE",
-      });
+  try {
+    setMessage("");
+    setError("");
 
-      const data = await response.json();
+    const response = await fetch(`${API_URL}/vehicles/${id}`, {
+      method: "DELETE",
+    });
 
-      if (!data.success) {
-        setError(data.message || "Delete failed");
-        return;
-      }
+    const data = await response.json();
 
-      setMessage("Vehicle deleted successfully");
-      fetchVehicles();
-    } catch (err) {
-      setError("Backend server not connected");
+    if (!data.success) {
+      setError(data.message || "Delete failed");
+      return;
     }
-  };
+
+    setMessage("Vehicle deleted successfully");
+    fetchVehicles();
+  } catch (err) {
+    setError("Backend server not connected");
+  }
+};
 
   return (
     <div className="space-y-6">
@@ -408,11 +413,11 @@ function Vehicles() {
                   <tbody>
                     {filteredVehicles.map((vehicle) => (
                       <tr
-                        key={vehicle.id}
+                        key={vehicle._id}
                         className="border-t border-slate-100 hover:bg-slate-50"
                       >
                         <td className="px-6 py-4 font-semibold text-slate-700">
-                          {vehicle.id}
+                          {vehicle._id?.slice(-6)}
                         </td>
 
                         <td className="px-6 py-4">
@@ -420,7 +425,7 @@ function Vehicles() {
                             {vehicle.busNo}
                           </p>
                           <span className="mt-1 inline-flex rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold text-green-700">
-                            Last Service: {vehicle.lastService}
+                            Last Service: {vehicle.lastService || "Not Available"}
                           </span>
                         </td>
 
@@ -456,7 +461,7 @@ function Vehicles() {
                             </button>
 
                             <button
-                              onClick={() => handleDelete(vehicle.id)}
+                              onClick={() => handleDelete(vehicle._id)}
                               className="h-9 w-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100"
                             >
                               <Trash2 size={16} />
@@ -465,6 +470,17 @@ function Vehicles() {
                         </td>
                       </tr>
                     ))}
+
+                    {filteredVehicles.length === 0 && (
+  <tr>
+    <td
+      colSpan="7"
+      className="px-6 py-8 text-center text-slate-500"
+    >
+      No vehicles found.
+    </td>
+  </tr>
+)}
                   </tbody>
                 </table>
               </div>
@@ -472,13 +488,13 @@ function Vehicles() {
               <div className="md:hidden p-4 space-y-4">
                 {filteredVehicles.map((vehicle) => (
                   <div
-                    key={vehicle.id}
+                    key={vehicle._id}
                     className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-xs font-semibold text-blue-600">
-                          {vehicle.id}
+                          {vehicle._id?.slice(-6)}
                         </p>
                         <h3 className="mt-1 font-bold text-slate-900">
                           {vehicle.busNo}
@@ -508,7 +524,7 @@ function Vehicles() {
                       <div className="rounded-xl bg-white p-3">
                         <p className="text-slate-400">Last Service</p>
                         <p className="font-semibold text-slate-800">
-                          {vehicle.lastService}
+                          {vehicle.lastService || "Not Available"}
                         </p>
                       </div>
                     </div>
@@ -532,7 +548,7 @@ function Vehicles() {
                       </button>
 
                       <button
-                        onClick={() => handleDelete(vehicle.id)}
+                        onClick={() => handleDelete(vehicle._id)}
                         className="flex-1 rounded-xl bg-red-50 py-2 text-sm font-semibold text-red-600"
                       >
                         Delete

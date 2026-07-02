@@ -9,11 +9,13 @@ import {
   Wrench,
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const initialForm = {
   busNo: "",
-  issue: "",
+  issueType: "",
+  description: "",
+  reportedDate: "",
   serviceDate: "",
   cost: "",
   status: "Pending",
@@ -27,6 +29,8 @@ function getStatusClass(status) {
       return "bg-blue-50 text-blue-700";
     case "Pending":
       return "bg-amber-50 text-amber-700";
+    case "Cancelled":
+      return "bg-red-50 text-red-700";
     default:
       return "bg-slate-100 text-slate-700";
   }
@@ -55,7 +59,7 @@ function Maintenance() {
       }
 
       setMaintenanceLogs(data.data || []);
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     } finally {
       setLoading(false);
@@ -68,7 +72,7 @@ function Maintenance() {
 
   const filteredMaintenanceLogs = useMemo(() => {
     return maintenanceLogs.filter((log) => {
-      const text = `${log.busNo} ${log.issue} ${log.serviceDate} ${log.status}`.toLowerCase();
+      const text = `${log.busNo} ${log.issueType} ${log.description} ${log.serviceDate} ${log.status}`.toLowerCase();
       return text.includes(searchTerm.toLowerCase());
     });
   }, [maintenanceLogs, searchTerm]);
@@ -129,7 +133,7 @@ function Maintenance() {
         },
         body: JSON.stringify({
           ...formData,
-          cost: Number(formData.cost),
+          cost: Number(formData.cost || 0),
         }),
       });
 
@@ -148,17 +152,19 @@ function Maintenance() {
 
       clearForm();
       fetchMaintenanceLogs();
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     }
   };
 
   const handleEdit = (log) => {
-    setEditingId(log.id);
+    setEditingId(log._id);
 
     setFormData({
       busNo: log.busNo || "",
-      issue: log.issue || "",
+      issueType: log.issueType || "",
+      description: log.description || "",
+      reportedDate: log.reportedDate || "",
       serviceDate: log.serviceDate || "",
       cost: log.cost || "",
       status: log.status || "Pending",
@@ -168,6 +174,11 @@ function Maintenance() {
   };
 
   const handleDelete = async (id) => {
+    if (!id) {
+      setError("Invalid maintenance record ID");
+      return;
+    }
+
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this maintenance record?"
     );
@@ -191,12 +202,12 @@ function Maintenance() {
 
       setMessage("Maintenance record deleted successfully");
       fetchMaintenanceLogs();
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     }
   };
 
-  return (
+    return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -292,7 +303,7 @@ function Maintenance() {
               </h2>
               <p className="text-sm text-amber-800">
                 Bus {dueAlert.busNo} has a {dueAlert.status.toLowerCase()} maintenance
-                issue: {dueAlert.issue}
+                issue: {dueAlert.issueType || dueAlert.description || "No details"}
               </p>
             </div>
           </div>
@@ -318,76 +329,69 @@ function Maintenance() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Bus Number
-              </label>
-              <input
-                type="text"
-                name="busNo"
-                value={formData.busNo}
-                onChange={handleChange}
-                placeholder="NB-4587"
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="text"
+              name="busNo"
+              value={formData.busNo}
+              onChange={handleChange}
+              placeholder="Bus Number"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Service Date
-              </label>
-              <input
-                type="date"
-                name="serviceDate"
-                value={formData.serviceDate}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="text"
+              name="issueType"
+              value={formData.issueType}
+              onChange={handleChange}
+              placeholder="Issue Type"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Maintenance Issue
-              </label>
-              <textarea
-                rows="3"
-                name="issue"
-                value={formData.issue}
-                onChange={handleChange}
-                placeholder="Enter maintenance issue or repair details"
-                className="mt-2 w-full resize-none rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              ></textarea>
-            </div>
+            <textarea
+              rows="3"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Description"
+              className="w-full resize-none rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Maintenance Cost
-              </label>
-              <input
-                type="number"
-                name="cost"
-                value={formData.cost}
-                onChange={handleChange}
-                placeholder="15000"
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="date"
+              name="reportedDate"
+              value={formData.reportedDate}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Status
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500 bg-white"
-              >
-                <option value="Pending">Pending</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-              </select>
-            </div>
+            <input
+              type="date"
+              name="serviceDate"
+              value={formData.serviceDate}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
+
+            <input
+              type="number"
+              name="cost"
+              value={formData.cost}
+              onChange={handleChange}
+              placeholder="Maintenance Cost"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
+
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500 bg-white"
+            >
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <button
@@ -407,6 +411,7 @@ function Maintenance() {
             </div>
           </form>
         </div>
+
 
         <div className="xl:col-span-2 rounded-3xl bg-white border border-slate-200 shadow-sm overflow-hidden">
           <div className="p-6 border-b border-slate-200">
@@ -466,11 +471,11 @@ function Maintenance() {
                   <tbody>
                     {filteredMaintenanceLogs.map((log) => (
                       <tr
-                        key={log.id}
+                        key={log._id}
                         className="border-t border-slate-100 hover:bg-slate-50"
                       >
                         <td className="px-6 py-4 font-semibold text-slate-700">
-                          {log.id}
+                          {log._id?.slice(-6)}
                         </td>
 
                         <td className="px-6 py-4 font-semibold text-slate-900">
@@ -478,11 +483,16 @@ function Maintenance() {
                         </td>
 
                         <td className="px-6 py-4 text-slate-600 max-w-xs">
-                          {log.issue}
+                          <p className="font-semibold">
+                            {log.issueType || "Maintenance Issue"}
+                          </p>
+                          <p className="text-xs text-slate-400">
+                            {log.description || "No description"}
+                          </p>
                         </td>
 
                         <td className="px-6 py-4 text-slate-600">
-                          {log.serviceDate}
+                          {log.serviceDate || "Not scheduled"}
                         </td>
 
                         <td className="px-6 py-4 font-semibold text-slate-900">
@@ -509,7 +519,7 @@ function Maintenance() {
                             </button>
 
                             <button
-                              onClick={() => handleDelete(log.id)}
+                              onClick={() => handleDelete(log._id)}
                               className="h-9 w-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100"
                             >
                               <Trash2 size={16} />
@@ -518,6 +528,17 @@ function Maintenance() {
                         </td>
                       </tr>
                     ))}
+
+                    {filteredMaintenanceLogs.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan="7"
+                          className="px-6 py-8 text-center text-slate-500"
+                        >
+                          No maintenance records found.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -525,19 +546,19 @@ function Maintenance() {
               <div className="md:hidden p-4 space-y-4">
                 {filteredMaintenanceLogs.map((log) => (
                   <div
-                    key={log.id}
+                    key={log._id}
                     className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-xs font-semibold text-blue-600">
-                          {log.id}
+                          {log._id?.slice(-6)}
                         </p>
                         <h3 className="mt-1 font-bold text-slate-900">
                           {log.busNo}
                         </h3>
                         <p className="mt-1 text-sm text-slate-500">
-                          {log.issue}
+                          {log.issueType || "Maintenance Issue"}
                         </p>
                       </div>
 
@@ -550,11 +571,22 @@ function Maintenance() {
                       </span>
                     </div>
 
+                    <p className="mt-3 text-sm text-slate-500">
+                      {log.description || "No description"}
+                    </p>
+
                     <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-xl bg-white p-3">
+                        <p className="text-slate-400">Reported Date</p>
+                        <p className="font-semibold text-slate-800">
+                          {log.reportedDate || "Not recorded"}
+                        </p>
+                      </div>
+
                       <div className="rounded-xl bg-white p-3">
                         <p className="text-slate-400">Service Date</p>
                         <p className="font-semibold text-slate-800">
-                          {log.serviceDate}
+                          {log.serviceDate || "Not scheduled"}
                         </p>
                       </div>
 
@@ -562,6 +594,13 @@ function Maintenance() {
                         <p className="text-slate-400">Cost</p>
                         <p className="font-semibold text-slate-800">
                           LKR {Number(log.cost || 0).toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="rounded-xl bg-white p-3">
+                        <p className="text-slate-400">Status</p>
+                        <p className="font-semibold text-slate-800">
+                          {log.status}
                         </p>
                       </div>
                     </div>
@@ -575,7 +614,7 @@ function Maintenance() {
                       </button>
 
                       <button
-                        onClick={() => handleDelete(log.id)}
+                        onClick={() => handleDelete(log._id)}
                         className="flex-1 rounded-xl bg-red-50 py-2 text-sm font-semibold text-red-600"
                       >
                         Delete
@@ -583,6 +622,12 @@ function Maintenance() {
                     </div>
                   </div>
                 ))}
+
+                {filteredMaintenanceLogs.length === 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-500">
+                    No maintenance records found.
+                  </div>
+                )}
               </div>
             </>
           )}

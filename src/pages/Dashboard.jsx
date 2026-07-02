@@ -1,98 +1,120 @@
+import { useEffect, useState } from "react";
 import {
   Map,
   CalendarClock,
   BusFront,
   Users,
-  AlertTriangle,
-  CheckCircle2,
   Wrench,
   Fuel,
+  CheckCircle2,
 } from "lucide-react";
 import StatCard from "../components/StatCard";
 
-const schedules = [
-  {
-    route: "Jaffna - Colombo",
-    bus: "ND-4567",
-    driver: "Mr. Kumar",
-    time: "08:00 AM",
-    status: "On-time",
-  },
-  {
-    route: "Kandy - Colombo",
-    bus: "WP-7788",
-    driver: "Mr. Silva",
-    time: "09:30 AM",
-    status: "Delayed",
-  },
-  {
-    route: "Galle - Matara",
-    bus: "SP-2311",
-    driver: "Mr. Perera",
-    time: "10:15 AM",
-    status: "Scheduled",
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 function Dashboard() {
+  const [summary, setSummary] = useState({
+    totalRoutes: 0,
+    totalDrivers: 0,
+    totalVehicles: 0,
+    activeSchedules: 0,
+    totalFuelCost: 0,
+    totalMaintenanceCost: 0,
+    activeVehicles: 0,
+    vehiclesInMaintenance: 0,
+  });
+
+  const [schedules, setSchedules] = useState([]);
+
+  useEffect(() => {
+    fetchSummary();
+    fetchSchedules();
+  }, []);
+
+  const fetchSummary = async () => {
+    try {
+      const res = await fetch(`${API_URL}/reports/summary`);
+      const data = await res.json();
+
+      if (data.success) {
+        setSummary(data.data);
+      }
+    } catch (error) {
+      console.error("Dashboard summary error:", error);
+    }
+  };
+
+  const fetchSchedules = async () => {
+    try {
+      const res = await fetch(`${API_URL}/schedules`);
+      const data = await res.json();
+
+      if (data.success) {
+        setSchedules(data.data.slice(0, 5));
+      }
+    } catch (error) {
+      console.error("Dashboard schedules error:", error);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         <StatCard
           title="Total Routes"
-          value="28"
-          subtitle="+4 this month"
+          value={summary.totalRoutes}
+          subtitle="Routes registered"
           icon={Map}
           color="blue"
         />
         <StatCard
-          title="Active Trips"
-          value="16"
-          subtitle="Currently running"
+          title="Active Schedules"
+          value={summary.activeSchedules}
+          subtitle="Currently planned"
           icon={CalendarClock}
           color="green"
         />
         <StatCard
-          title="Available Buses"
-          value="12"
-          subtitle="Ready for assignment"
+          title="Total Vehicles"
+          value={summary.totalVehicles}
+          subtitle={`${summary.activeVehicles} active vehicles`}
           icon={BusFront}
           color="blue"
         />
         <StatCard
-          title="Assigned Drivers"
-          value="34"
-          subtitle="Today duty roster"
+          title="Total Drivers"
+          value={summary.totalDrivers}
+          subtitle="Registered drivers"
           icon={Users}
           color="slate"
         />
         <StatCard
-          title="Delayed Trips"
-          value="03"
-          subtitle="Need attention"
-          icon={AlertTriangle}
-          color="amber"
-        />
-        <StatCard
-          title="Completed Trips"
-          value="48"
-          subtitle="Today completed"
-          icon={CheckCircle2}
-          color="green"
-        />
-        <StatCard
           title="Maintenance Due"
-          value="05"
-          subtitle="Service required"
+          value={summary.vehiclesInMaintenance}
+          subtitle="Vehicles in maintenance"
           icon={Wrench}
           color="red"
         />
         <StatCard
-          title="Monthly Fuel Cost"
-          value="LKR 450K"
-          subtitle="June 2026"
+          title="Fuel Cost"
+          value={`LKR ${summary.totalFuelCost}`}
+          subtitle="Total recorded fuel cost"
           icon={Fuel}
           color="amber"
+        />
+        <StatCard
+          title="Maintenance Cost"
+          value={`LKR ${summary.totalMaintenanceCost}`}
+          subtitle="Total service cost"
+          icon={Wrench}
+          color="red"
+        />
+        <StatCard
+          title="System Status"
+          value="Live"
+          subtitle="Connected to MongoDB"
+          icon={CheckCircle2}
+          color="green"
         />
       </section>
 
@@ -103,7 +125,7 @@ function Dashboard() {
               Recent Schedules
             </h3>
             <p className="text-sm text-slate-500">
-              Latest route and bus assignments
+              Latest route and bus assignments from database
             </p>
           </div>
 
@@ -118,71 +140,86 @@ function Dashboard() {
                   <th className="text-left px-6 py-4 font-semibold">Status</th>
                 </tr>
               </thead>
+
               <tbody>
-                {schedules.map((item) => (
-                  <tr
-                    key={item.bus}
-                    className="border-t border-slate-100 hover:bg-slate-50"
-                  >
-                    <td className="px-6 py-4 font-medium text-slate-900">
-                      {item.route}
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">{item.bus}</td>
-                    <td className="px-6 py-4 text-slate-600">
-                      {item.driver}
-                    </td>
-                    <td className="px-6 py-4 text-slate-600">{item.time}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          item.status === "On-time"
-                            ? "bg-green-50 text-green-700"
-                            : item.status === "Delayed"
-                            ? "bg-amber-50 text-amber-700"
-                            : "bg-blue-50 text-blue-700"
-                        }`}
-                      >
-                        {item.status}
-                      </span>
+                {schedules.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="5"
+                      className="px-6 py-8 text-center text-slate-500"
+                    >
+                      No schedules available.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  schedules.map((item) => (
+                    <tr
+                      key={item._id}
+                      className="border-t border-slate-100 hover:bg-slate-50"
+                    >
+                      <td className="px-6 py-4 font-medium text-slate-900">
+                        {item.routeNo}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {item.busNo}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {item.driverName}
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">
+                        {item.departureTime} - {item.arrivalTime}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            item.status === "On-time" ||
+                            item.status === "Completed"
+                              ? "bg-green-50 text-green-700"
+                              : item.status === "Delayed"
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-blue-50 text-blue-700"
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         </div>
 
         <div className="rounded-3xl bg-slate-950 text-white p-6 shadow-sm">
-          <h3 className="text-lg font-bold">Operational Alerts</h3>
+          <h3 className="text-lg font-bold">System Overview</h3>
           <p className="mt-1 text-sm text-slate-400">
-            Important updates for today
+            Live operational summary
           </p>
 
           <div className="mt-6 space-y-4">
             <div className="rounded-2xl bg-white/10 p-4">
+              <p className="font-semibold text-green-300">Backend Connected</p>
+              <p className="mt-1 text-sm text-slate-300">
+                Data is fetched from MongoDB through Render API.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-white/10 p-4">
+              <p className="font-semibold text-blue-300">
+                {summary.totalVehicles} vehicles registered
+              </p>
+              <p className="mt-1 text-sm text-slate-300">
+                {summary.activeVehicles} vehicles currently active.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-white/10 p-4">
               <p className="font-semibold text-amber-300">
-                3 delayed trips
+                LKR {summary.totalFuelCost} fuel cost
               </p>
               <p className="mt-1 text-sm text-slate-300">
-                Check schedule management for details.
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/10 p-4">
-              <p className="font-semibold text-red-300">
-                5 vehicles maintenance due
-              </p>
-              <p className="mt-1 text-sm text-slate-300">
-                Update maintenance logs before assignment.
-              </p>
-            </div>
-
-            <div className="rounded-2xl bg-white/10 p-4">
-              <p className="font-semibold text-green-300">
-                12 buses available
-              </p>
-              <p className="mt-1 text-sm text-slate-300">
-                Ready for new route assignments.
+                Based on recorded fuel logs.
               </p>
             </div>
           </div>

@@ -10,7 +10,7 @@ import {
   Wallet,
 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const initialForm = {
   busNo: "",
@@ -45,7 +45,7 @@ function FuelLogs() {
       }
 
       setFuelLogs(data.data || []);
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     } finally {
       setLoading(false);
@@ -78,11 +78,7 @@ function FuelLogs() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const clearForm = () => {
@@ -106,14 +102,12 @@ function FuelLogs() {
 
       const response = await fetch(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           liters: Number(formData.liters),
           cost: Number(formData.cost),
-          odometerReading: Number(formData.odometerReading),
+          odometerReading: Number(formData.odometerReading || 0),
         }),
       });
 
@@ -132,13 +126,13 @@ function FuelLogs() {
 
       clearForm();
       fetchFuelLogs();
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     }
   };
 
   const handleEdit = (log) => {
-    setEditingId(log.id);
+    setEditingId(log._id);
 
     setFormData({
       busNo: log.busNo || "",
@@ -154,6 +148,11 @@ function FuelLogs() {
   };
 
   const handleDelete = async (id) => {
+    if (!id) {
+      setError("Invalid fuel log ID");
+      return;
+    }
+
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this fuel log?"
     );
@@ -177,7 +176,7 @@ function FuelLogs() {
 
       setMessage("Fuel log deleted successfully");
       fetchFuelLogs();
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     }
   };
@@ -271,105 +270,68 @@ function FuelLogs() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Bus Number
-              </label>
-              <input
-                type="text"
-                name="busNo"
-                value={formData.busNo}
-                onChange={handleChange}
-                placeholder="NB-4587"
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="text"
+              name="busNo"
+              value={formData.busNo}
+              onChange={handleChange}
+              placeholder="Bus Number"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Fuel Type
-              </label>
-              <select
-                name="fuelType"
-                value={formData.fuelType}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500 bg-white"
-              >
-                <option value="Diesel">Diesel</option>
-                <option value="Petrol">Petrol</option>
-              </select>
-            </div>
+            <select
+              name="fuelType"
+              value={formData.fuelType}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500 bg-white"
+            >
+              <option value="Diesel">Diesel</option>
+              <option value="Petrol">Petrol</option>
+            </select>
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Filled Date
-              </label>
-              <input
-                type="date"
-                name="filledDate"
-                value={formData.filledDate}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="date"
+              name="filledDate"
+              value={formData.filledDate}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
-              <div>
-                <label className="text-sm font-semibold text-slate-700">
-                  Fuel Quantity
-                </label>
-                <input
-                  type="number"
-                  name="liters"
-                  value={formData.liters}
-                  onChange={handleChange}
-                  placeholder="80"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-                />
-              </div>
+            <input
+              type="number"
+              name="liters"
+              value={formData.liters}
+              onChange={handleChange}
+              placeholder="Fuel Quantity"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-              <div>
-                <label className="text-sm font-semibold text-slate-700">
-                  Fuel Cost
-                </label>
-                <input
-                  type="number"
-                  name="cost"
-                  value={formData.cost}
-                  onChange={handleChange}
-                  placeholder="25600"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-                />
-              </div>
-            </div>
+            <input
+              type="number"
+              name="cost"
+              value={formData.cost}
+              onChange={handleChange}
+              placeholder="Fuel Cost"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Odometer Reading
-              </label>
-              <input
-                type="number"
-                name="odometerReading"
-                value={formData.odometerReading}
-                onChange={handleChange}
-                placeholder="125400"
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="number"
+              name="odometerReading"
+              value={formData.odometerReading}
+              onChange={handleChange}
+              placeholder="Odometer Reading"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Driver Name
-              </label>
-              <input
-                type="text"
-                name="driverName"
-                value={formData.driverName}
-                onChange={handleChange}
-                placeholder="Kamal Perera"
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="text"
+              name="driverName"
+              value={formData.driverName}
+              onChange={handleChange}
+              placeholder="Driver Name"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <button
@@ -438,33 +400,27 @@ function FuelLogs() {
                   <tbody>
                     {filteredFuelLogs.map((log) => (
                       <tr
-                        key={log.id}
+                        key={log._id}
                         className="border-t border-slate-100 hover:bg-slate-50"
                       >
                         <td className="px-6 py-4 font-semibold text-slate-700">
-                          {log.id}
+                          {log._id?.slice(-6)}
                         </td>
-
                         <td className="px-6 py-4 font-semibold text-slate-900">
                           {log.busNo}
                         </td>
-
                         <td className="px-6 py-4 text-slate-600">
-                          {log.driverName}
+                          {log.driverName || "Not recorded"}
                         </td>
-
                         <td className="px-6 py-4 text-slate-600">
                           {log.filledDate}
                         </td>
-
                         <td className="px-6 py-4 text-slate-600">
                           {log.liters} L
                         </td>
-
                         <td className="px-6 py-4 font-semibold text-slate-900">
                           LKR {Number(log.cost || 0).toLocaleString()}
                         </td>
-
                         <td className="px-6 py-4">
                           <div className="flex justify-end gap-2">
                             <button
@@ -475,7 +431,7 @@ function FuelLogs() {
                             </button>
 
                             <button
-                              onClick={() => handleDelete(log.id)}
+                              onClick={() => handleDelete(log._id)}
                               className="h-9 w-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100"
                             >
                               <Trash2 size={16} />
@@ -484,6 +440,17 @@ function FuelLogs() {
                         </td>
                       </tr>
                     ))}
+
+                    {filteredFuelLogs.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan="7"
+                          className="px-6 py-8 text-center text-slate-500"
+                        >
+                          No fuel logs found.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -491,19 +458,19 @@ function FuelLogs() {
               <div className="md:hidden p-4 space-y-4">
                 {filteredFuelLogs.map((log) => (
                   <div
-                    key={log.id}
+                    key={log._id}
                     className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-xs font-semibold text-blue-600">
-                          {log.id}
+                          {log._id?.slice(-6)}
                         </p>
                         <h3 className="mt-1 font-bold text-slate-900">
                           {log.busNo}
                         </h3>
                         <p className="mt-1 text-sm text-slate-500">
-                          {log.driverName}
+                          {log.driverName || "Not recorded"}
                         </p>
                       </div>
 
@@ -516,7 +483,7 @@ function FuelLogs() {
                       <div className="rounded-xl bg-white p-3">
                         <p className="text-slate-400">Date</p>
                         <p className="font-semibold text-slate-800">
-                          {log.filledDate}
+                          {log.filledDate || "Not recorded"}
                         </p>
                       </div>
 
@@ -531,7 +498,7 @@ function FuelLogs() {
                     <div className="mt-4 flex items-center gap-2 rounded-xl bg-white p-3">
                       <CalendarDays size={18} className="text-slate-400" />
                       <p className="text-sm text-slate-600">
-                        Odometer: {log.odometerReading}
+                        Odometer: {log.odometerReading || "Not recorded"}
                       </p>
                     </div>
 
@@ -544,7 +511,7 @@ function FuelLogs() {
                       </button>
 
                       <button
-                        onClick={() => handleDelete(log.id)}
+                        onClick={() => handleDelete(log._id)}
                         className="flex-1 rounded-xl bg-red-50 py-2 text-sm font-semibold text-red-600"
                       >
                         Delete
@@ -552,6 +519,12 @@ function FuelLogs() {
                     </div>
                   </div>
                 ))}
+
+                {filteredFuelLogs.length === 0 && (
+                  <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center text-slate-500">
+                    No fuel logs found.
+                  </div>
+                )}
               </div>
             </>
           )}

@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Edit, MapPin, Plus, Search, Trash2 } from "lucide-react";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 const initialForm = {
   routeNo: "",
@@ -36,7 +37,7 @@ function Routes() {
       }
 
       setRoutes(data.data || []);
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     } finally {
       setLoading(false);
@@ -103,13 +104,13 @@ function Routes() {
 
       clearForm();
       fetchRoutes();
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     }
   };
 
   const handleEdit = (route) => {
-    setEditingId(route.id);
+    setEditingId(route._id);
 
     setFormData({
       routeNo: route.routeNo || "",
@@ -125,6 +126,11 @@ function Routes() {
   };
 
   const handleDelete = async (id) => {
+    if (!id) {
+      setError("Invalid route ID");
+      return;
+    }
+
     const confirmDelete = window.confirm(
       "Are you sure you want to delete this route?"
     );
@@ -148,7 +154,7 @@ function Routes() {
 
       setMessage("Route deleted successfully");
       fetchRoutes();
-    } catch (err) {
+    } catch {
       setError("Backend server not connected");
     }
   };
@@ -203,108 +209,69 @@ function Routes() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Route Number
-              </label>
-              <input
-                type="text"
-                name="routeNo"
-                value={formData.routeNo}
-                onChange={handleChange}
-                placeholder="Example: 138"
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              />
-            </div>
+            <input
+              type="text"
+              name="routeNo"
+              value={formData.routeNo}
+              onChange={handleChange}
+              placeholder="Route Number"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
-              <div>
-                <label className="text-sm font-semibold text-slate-700">
-                  Start Point
-                </label>
-                <input
-                  type="text"
-                  name="startPoint"
-                  value={formData.startPoint}
-                  onChange={handleChange}
-                  placeholder="Pettah"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-                />
-              </div>
+            <input
+              type="text"
+              name="startPoint"
+              value={formData.startPoint}
+              onChange={handleChange}
+              placeholder="Start Point"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-              <div>
-                <label className="text-sm font-semibold text-slate-700">
-                  End Point
-                </label>
-                <input
-                  type="text"
-                  name="endPoint"
-                  value={formData.endPoint}
-                  onChange={handleChange}
-                  placeholder="Homagama"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-                />
-              </div>
-            </div>
+            <input
+              type="text"
+              name="endPoint"
+              value={formData.endPoint}
+              onChange={handleChange}
+              placeholder="End Point"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Intermediate Stops
-              </label>
-              <textarea
-                rows="3"
-                name="stops"
-                value={formData.stops}
-                onChange={handleChange}
-                placeholder="Nugegoda, Maharagama, Kottawa"
-                className="mt-2 w-full resize-none rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              ></textarea>
-            </div>
+            <textarea
+              rows="3"
+              name="stops"
+              value={formData.stops}
+              onChange={handleChange}
+              placeholder="Intermediate Stops"
+              className="w-full resize-none rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-4">
-              <div>
-                <label className="text-sm font-semibold text-slate-700">
-                  Total Distance
-                </label>
-                <input
-                  type="text"
-                  name="distance"
-                  value={formData.distance}
-                  onChange={handleChange}
-                  placeholder="28 km"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-                />
-              </div>
+            <input
+              type="text"
+              name="distance"
+              value={formData.distance}
+              onChange={handleChange}
+              placeholder="Total Distance"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-              <div>
-                <label className="text-sm font-semibold text-slate-700">
-                  Estimated Time
-                </label>
-                <input
-                  type="text"
-                  name="estimatedTime"
-                  value={formData.estimatedTime}
-                  onChange={handleChange}
-                  placeholder="1h 20m"
-                  className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-                />
-              </div>
-            </div>
+            <input
+              type="text"
+              name="estimatedTime"
+              value={formData.estimatedTime}
+              onChange={handleChange}
+              placeholder="Estimated Time"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            />
 
-            <div>
-              <label className="text-sm font-semibold text-slate-700">
-                Status
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="mt-2 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
-              >
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
-            </div>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:border-blue-500"
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
               <button
@@ -383,11 +350,11 @@ function Routes() {
                   <tbody>
                     {filteredRoutes.map((route) => (
                       <tr
-                        key={route.id}
+                        key={route._id}
                         className="border-t border-slate-100 hover:bg-slate-50"
                       >
                         <td className="px-6 py-4 font-semibold text-slate-700">
-                          {route.id}
+                          {route._id?.slice(-6)}
                         </td>
                         <td className="px-6 py-4">
                           <p className="font-semibold text-slate-900">
@@ -427,7 +394,7 @@ function Routes() {
                             </button>
 
                             <button
-                              onClick={() => handleDelete(route.id)}
+                              onClick={() => handleDelete(route._id)}
                               className="h-9 w-9 rounded-xl bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100"
                             >
                               <Trash2 size={16} />
@@ -436,6 +403,17 @@ function Routes() {
                         </td>
                       </tr>
                     ))}
+
+                    {filteredRoutes.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan="7"
+                          className="px-6 py-8 text-center text-slate-500"
+                        >
+                          No routes found.
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -443,51 +421,17 @@ function Routes() {
               <div className="md:hidden p-4 space-y-4">
                 {filteredRoutes.map((route) => (
                   <div
-                    key={route.id}
+                    key={route._id}
                     className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <p className="text-xs font-semibold text-blue-600">
-                          {route.id}
-                        </p>
-                        <h3 className="mt-1 font-bold text-slate-900">
-                          Route {route.routeNo}
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-500">
-                          {route.startPoint} to {route.endPoint}
-                        </p>
-                      </div>
-
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                          route.status === "Active"
-                            ? "bg-green-50 text-green-700"
-                            : "bg-slate-100 text-slate-600"
-                        }`}
-                      >
-                        {route.status}
-                      </span>
-                    </div>
-
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                      <div className="rounded-xl bg-white p-3">
-                        <p className="text-slate-400">Distance</p>
-                        <p className="font-semibold text-slate-800">
-                          {route.distance}
-                        </p>
-                      </div>
-
-                      <div className="rounded-xl bg-white p-3">
-                        <p className="text-slate-400">Time</p>
-                        <p className="font-semibold text-slate-800">
-                          {route.estimatedTime}
-                        </p>
-                      </div>
-                    </div>
-
-                    <p className="mt-3 text-sm text-slate-500">
-                      Stops: {route.stops || "Not specified"}
+                    <p className="text-xs font-semibold text-blue-600">
+                      {route._id?.slice(-6)}
+                    </p>
+                    <h3 className="mt-1 font-bold text-slate-900">
+                      Route {route.routeNo}
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {route.startPoint} to {route.endPoint}
                     </p>
 
                     <div className="mt-4 flex gap-2">
@@ -499,7 +443,7 @@ function Routes() {
                       </button>
 
                       <button
-                        onClick={() => handleDelete(route.id)}
+                        onClick={() => handleDelete(route._id)}
                         className="flex-1 rounded-xl bg-red-50 py-2 text-sm font-semibold text-red-600"
                       >
                         Delete
